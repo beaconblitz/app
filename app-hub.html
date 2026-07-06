@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>App Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --text:#FFFFFF;
+    --text-muted:rgba(255,255,255,0.65);
+    --text-faint:rgba(255,255,255,0.4);
+    --glass:rgba(255,255,255,0.12);
+    --glass-strong:rgba(255,255,255,0.20);
+    --glass-border:rgba(255,255,255,0.28);
+    --live:#5EE0A0;
+    --building:#FFC24B;
+    --idea:#B9A6FF;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+    color:var(--text);
+    overflow-x:hidden;
+    position:relative;
+    background:#1a1035;
+  }
+  .bg{
+    position:fixed;
+    inset:0;
+    z-index:-1;
+    background:
+      radial-gradient(circle at 15% 20%, #FF7EB3 0%, transparent 45%),
+      radial-gradient(circle at 85% 15%, #6A8DFF 0%, transparent 50%),
+      radial-gradient(circle at 75% 80%, #7C5CFF 0%, transparent 50%),
+      radial-gradient(circle at 20% 85%, #4FD8C4 0%, transparent 45%),
+      linear-gradient(135deg, #2B1B55 0%, #1a1035 100%);
+    background-size:180% 180%, 180% 180%, 180% 180%, 180% 180%, 100% 100%;
+    animation:drift 22s ease-in-out infinite;
+  }
+  @keyframes drift{
+    0%{background-position:0% 0%, 100% 0%, 100% 100%, 0% 100%, 0 0;}
+    50%{background-position:30% 20%, 70% 30%, 60% 70%, 30% 80%, 0 0;}
+    100%{background-position:0% 0%, 100% 0%, 100% 100%, 0% 100%, 0 0;}
+  }
+  .wrap{
+    max-width:900px;
+    margin:0 auto;
+    padding:56px 20px 80px;
+    position:relative;
+  }
+  header{
+    margin-bottom:32px;
+  }
+  .eyebrow{
+    font-family:'JetBrains Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.12em;
+    text-transform:uppercase;
+    color:var(--text-faint);
+    margin-bottom:10px;
+  }
+  h1{
+    font-size:40px;
+    font-weight:700;
+    margin:0 0 8px;
+    letter-spacing:-0.02em;
+  }
+  header p{
+    margin:0;
+    color:var(--text-muted);
+    font-size:15px;
+  }
+  .glass-panel{
+    background:var(--glass);
+    backdrop-filter:blur(24px) saturate(160%);
+    -webkit-backdrop-filter:blur(24px) saturate(160%);
+    border:1px solid var(--glass-border);
+    border-radius:20px;
+  }
+  .toolbar{
+    display:flex;
+    gap:12px;
+    margin-bottom:20px;
+  }
+  #search{
+    flex:1;
+    background:var(--glass);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border:1px solid var(--glass-border);
+    color:var(--text);
+    padding:14px 18px;
+    border-radius:16px;
+    font-size:15px;
+    font-family:'Inter',sans-serif;
+  }
+  #search::placeholder{color:var(--text-faint);}
+  #search:focus{outline:none;border-color:rgba(255,255,255,0.5);background:var(--glass-strong);}
+  .filters{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    margin-bottom:26px;
+  }
+  .filter-btn{
+    background:var(--glass);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border:1px solid var(--glass-border);
+    color:var(--text-muted);
+    padding:10px 16px;
+    border-radius:14px;
+    font-size:13px;
+    font-family:'Inter',sans-serif;
+    font-weight:500;
+    cursor:pointer;
+    transition:all .2s ease;
+  }
+  .filter-btn.active{
+    background:var(--glass-strong);
+    color:var(--text);
+    border-color:rgba(255,255,255,0.5);
+  }
+  .grid{
+    display:grid;
+    gap:16px;
+  }
+  .card{
+    padding:24px;
+    display:grid;
+    grid-template-columns:auto 1fr auto;
+    gap:18px;
+    align-items:center;
+    transition:transform .25s ease, background .25s ease, box-shadow .25s ease;
+    box-shadow:0 8px 32px rgba(0,0,0,0.15);
+  }
+  .icon{
+    width:56px;
+    height:56px;
+    border-radius:16px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:19px;
+    font-weight:700;
+    color:#fff;
+    border:1px solid rgba(255,255,255,0.35);
+    box-shadow:0 6px 18px rgba(0,0,0,0.25), inset 0 1px 0 rgba(255,255,255,0.3);
+    flex-shrink:0;
+  }
+  .card:hover{
+    transform:translateY(-3px);
+    background:var(--glass-strong);
+    box-shadow:0 16px 40px rgba(0,0,0,0.25);
+  }
+  .card-body h3{
+    font-size:19px;
+    font-weight:600;
+    margin:0 0 6px;
+    letter-spacing:-0.01em;
+  }
+  .card-body p{
+    margin:0 0 14px;
+    color:var(--text-muted);
+    font-size:14px;
+    line-height:1.55;
+  }
+  .meta-row{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .status{
+    font-family:'JetBrains Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.05em;
+    text-transform:uppercase;
+    padding:4px 10px;
+    border-radius:8px;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    background:rgba(255,255,255,0.1);
+    border:1px solid rgba(255,255,255,0.15);
+  }
+  .status::before{
+    content:'';
+    width:6px;height:6px;
+    border-radius:50%;
+    background:currentColor;
+    box-shadow:0 0 6px currentColor;
+  }
+  .status.live{color:var(--live);}
+  .status.building{color:var(--building);}
+  .status.idea{color:var(--idea);}
+  .tag{
+    font-size:12px;
+    color:var(--text-faint);
+    font-family:'JetBrains Mono',monospace;
+  }
+  .tag::before{content:'#';}
+  .launch{
+    background:rgba(255,255,255,0.9);
+    color:#1a1035;
+    border:none;
+    padding:12px 22px;
+    border-radius:14px;
+    font-size:13.5px;
+    font-weight:600;
+    text-decoration:none;
+    white-space:nowrap;
+    transition:all .2s ease;
+    box-shadow:0 4px 16px rgba(0,0,0,0.2);
+  }
+  .launch:hover{
+    background:#FFFFFF;
+    transform:scale(1.04);
+  }
+  .empty{
+    text-align:center;
+    padding:60px 20px;
+    color:var(--text-muted);
+    font-size:14px;
+  }
+  .admin-btn{
+    background:rgba(255,255,255,0.9);
+    color:#1a1035;
+    border:none;
+    padding:0 20px;
+    border-radius:16px;
+    font-size:14px;
+    font-weight:600;
+    font-family:'Inter',sans-serif;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:all .2s ease;
+  }
+  .admin-btn:hover{transform:scale(1.03);}
+  .delete-btn{
+    position:absolute;
+    top:10px;
+    right:10px;
+    width:26px;
+    height:26px;
+    border-radius:50%;
+    border:1px solid rgba(255,255,255,0.25);
+    background:rgba(0,0,0,0.25);
+    color:var(--text-muted);
+    font-size:14px;
+    line-height:1;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:all .15s ease;
+  }
+  .delete-btn:hover{background:rgba(255,80,80,0.3);color:#fff;}
+  .card{position:relative;}
+  .modal-overlay{
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.5);
+    z-index:10;
+    align-items:center;
+    justify-content:center;
+    padding:20px;
+  }
+  .modal-overlay.open{display:flex;}
+  .modal{
+    width:100%;
+    max-width:420px;
+    padding:28px;
+  }
+  .modal h2{
+    font-size:20px;
+    font-weight:600;
+    margin:0 0 18px;
+  }
+  .modal label{
+    display:block;
+    font-size:12.5px;
+    color:var(--text-muted);
+    margin:14px 0 6px;
+  }
+  .modal input, .modal select{
+    width:100%;
+    background:rgba(255,255,255,0.1);
+    border:1px solid var(--glass-border);
+    color:var(--text);
+    padding:11px 14px;
+    border-radius:12px;
+    font-size:14px;
+    font-family:'Inter',sans-serif;
+  }
+  .modal input:focus, .modal select:focus{outline:none;border-color:rgba(255,255,255,0.5);}
+  .modal select option{background:#2B1B55;color:#fff;}
+  .modal-actions{
+    display:flex;
+    gap:10px;
+    margin-top:22px;
+  }
+  .cancel-btn, .save-btn{
+    flex:1;
+    padding:12px;
+    border-radius:12px;
+    font-size:14px;
+    font-weight:600;
+    font-family:'Inter',sans-serif;
+    cursor:pointer;
+    border:1px solid var(--glass-border);
+  }
+  .cancel-btn{background:transparent;color:var(--text-muted);}
+  .save-btn{background:rgba(255,255,255,0.9);color:#1a1035;border:none;}
+  .save-btn:hover{background:#fff;}
+  footer{
+    margin-top:44px;
+    padding-top:20px;
+    border-top:1px solid rgba(255,255,255,0.15);
+    color:var(--text-faint);
+    font-size:12px;
+    font-family:'JetBrains Mono',monospace;
+  }
+  @media (max-width:640px){
+    h1{font-size:32px;}
+    .card{grid-template-columns:56px 1fr;grid-template-areas:"icon body" "launch launch";}
+    .icon{grid-area:icon;}
+    .card-body{grid-area:body;}
+    .launch{grid-area:launch;justify-self:start;width:100%;text-align:center;margin-top:4px;}
+  }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="wrap">
+
+  <header>
+    <div class="eyebrow">App Hub</div>
+    <h1>Ente Web Apps</h1>
+    <p>Ella apps-um ivide ninnu open cheyyam</p>
+  </header>
+
+  <div class="toolbar">
+    <input type="text" id="search" placeholder="App search cheyyu...">
+    <button id="adminBtn" class="admin-btn">+ Add app</button>
+  </div>
+  <div class="filters glass-panel" id="filters" style="padding:8px;display:inline-flex;"></div>
+
+  <div class="grid" id="grid"></div>
+
+  <footer>Apps ivide add cheythal browser-il save aavum (localStorage)</footer>
+</div>
+
+<div class="modal-overlay" id="pinOverlay">
+  <div class="modal glass-panel" style="max-width:320px;">
+    <h2>Admin PIN</h2>
+    <p style="margin:0 0 4px;color:var(--text-muted);font-size:13px;">App add cheyyan PIN nalkuu</p>
+    <input type="password" id="pinInput" inputmode="numeric" placeholder="••••" style="margin-top:14px;text-align:center;letter-spacing:4px;font-size:18px;">
+    <p id="pinError" style="color:#FF7E7E;font-size:12.5px;margin:8px 0 0;display:none;">Wrong PIN, try again</p>
+    <div class="modal-actions">
+      <button type="button" id="pinCancelBtn" class="cancel-btn">Cancel</button>
+      <button type="button" id="pinSubmitBtn" class="save-btn">Unlock</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal glass-panel">
+    <h2>Puthiya app add cheyyu</h2>
+    <form id="appForm">
+      <label>App name</label>
+      <input type="text" id="f_name" required placeholder="e.g. Billing System">
+      <label>Description</label>
+      <input type="text" id="f_desc" required placeholder="Ee app enthu cheyyum">
+      <label>URL</label>
+      <input type="url" id="f_url" required placeholder="https://yourusername.github.io/app-name">
+      <label>Tags (comma separated)</label>
+      <input type="text" id="f_tags" placeholder="billing, firebase">
+      <label>Status</label>
+      <select id="f_status">
+        <option value="live">Live</option>
+        <option value="building">Building</option>
+        <option value="idea">Idea</option>
+      </select>
+      <div class="modal-actions">
+        <button type="button" id="cancelBtn" class="cancel-btn">Cancel</button>
+        <button type="submit" class="save-btn">Add app</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   DEFAULT APPS — used only the first time this page loads.
+   After that, apps you add via the "+ Add app" button are saved
+   in the browser's localStorage, so this list stays as a fallback.
+   status: "live" | "building" | "idea"
+   ============================================================ */
+const DEFAULT_APPS = [
+  {
+    name: "Digital Marketing Billing System",
+    description: "Daily billing & client invoice tracker for the agency, with Firebase real-time sync.",
+    url: "https://github.com/yourusername/billing-system",
+    tags: ["billing", "firebase"],
+    status: "building"
+  },
+  {
+    name: "Mobile Shop Stock Manager",
+    description: "Multi-branch stock management with role-based access and real-time sync across users.",
+    url: "https://github.com/yourusername/stock-manager",
+    tags: ["inventory", "firebase", "multi-branch"],
+    status: "live"
+  },
+  {
+    name: "SEO Class Slide Generator",
+    description: "Generates structured Manglish SEO class PPTs with Q&A sections for each session.",
+    url: "https://github.com/yourusername/seo-slides",
+    tags: ["teaching", "ppt"],
+    status: "live"
+  },
+  {
+    name: "Reels Script Builder",
+    description: "Hook + Problem + Solution + CTA script templates for Meta Ads Instagram Reels.",
+    url: "https://github.com/yourusername/reels-scripts",
+    tags: ["content", "meta-ads"],
+    status: "idea"
+  }
+];
+/* ============================================================ */
+
+const STORAGE_KEY = 'apphub_apps_v1';
+
+function loadApps(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return DEFAULT_APPS.slice();
+}
+
+function saveApps(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(APPS));
+  }catch(e){}
+}
+
+let APPS = loadApps();
+
+const grid = document.getElementById('grid');
+const filtersEl = document.getElementById('filters');
+const searchEl = document.getElementById('search');
+let activeFilter = 'all';
+
+const ICON_GRADIENTS = [
+  'linear-gradient(135deg, #FF7EB3, #FF4D8D)',
+  'linear-gradient(135deg, #6A8DFF, #4B5FE0)',
+  'linear-gradient(135deg, #4FD8C4, #2BB89E)',
+  'linear-gradient(135deg, #B9A6FF, #7C5CFF)',
+  'linear-gradient(135deg, #FFC24B, #FF9F43)'
+];
+
+function initials(name){
+  return name.split(' ').filter(Boolean).slice(0,2).map(w => w[0]).join('').toUpperCase();
+}
+
+function statusLabel(s){
+  return { live: 'Live', building: 'Building', idea: 'Idea' }[s] || s;
+}
+
+function render(){
+  const q = searchEl.value.trim().toLowerCase();
+  const filtered = APPS.filter(app => {
+    const matchesFilter = activeFilter === 'all' || app.status === activeFilter;
+    const matchesSearch = !q ||
+      app.name.toLowerCase().includes(q) ||
+      app.description.toLowerCase().includes(q) ||
+      app.tags.some(t => t.toLowerCase().includes(q));
+    return matchesFilter && matchesSearch;
+  });
+
+  if(filtered.length === 0){
+    grid.innerHTML = '<div class="empty glass-panel">Ee search-inu onnum kittiyilla</div>';
+    return;
+  }
+
+  grid.innerHTML = filtered.map((app) => {
+    const originalIndex = APPS.indexOf(app);
+    const gradient = ICON_GRADIENTS[originalIndex % ICON_GRADIENTS.length];
+    return `
+      <div class="card glass-panel">
+        <button class="delete-btn" data-index="${originalIndex}" title="Delete" aria-label="Delete app">×</button>
+        <div class="icon" style="background:${gradient}">${initials(app.name)}</div>
+        <div class="card-body">
+          <h3>${app.name}</h3>
+          <p>${app.description}</p>
+          <div class="meta-row">
+            <span class="status ${app.status}">${statusLabel(app.status)}</span>
+            ${app.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+          </div>
+        </div>
+        <a class="launch" href="${app.url}" target="_blank" rel="noopener">Open app</a>
+      </div>
+    `;
+  }).join('');
+
+  grid.querySelectorAll('.delete-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.index, 10);
+      const pin = prompt('Admin PIN nalkuu:');
+      if(pin === null) return;
+      if(pin !== ADMIN_PIN){
+        alert('Wrong PIN');
+        return;
+      }
+      if(confirm('Ee app remove cheyyano?')){
+        APPS.splice(idx, 1);
+        saveApps();
+        renderFilters();
+        render();
+      }
+    });
+  });
+}
+
+function renderFilters(){
+  const statuses = ['all', ...new Set(APPS.map(a => a.status))];
+  filtersEl.innerHTML = statuses.map(s => `
+    <button class="filter-btn ${s === activeFilter ? 'active' : ''}" data-status="${s}">
+      ${s === 'all' ? 'All' : statusLabel(s)}
+    </button>
+  `).join('');
+
+  filtersEl.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      activeFilter = btn.dataset.status;
+      renderFilters();
+      render();
+    });
+  });
+}
+
+searchEl.addEventListener('input', render);
+
+const adminBtn = document.getElementById('adminBtn');
+const modalOverlay = document.getElementById('modalOverlay');
+const cancelBtn = document.getElementById('cancelBtn');
+const appForm = document.getElementById('appForm');
+
+/* ---- change this PIN to whatever you like ---- */
+const ADMIN_PIN = "1234";
+/* ----------------------------------------------- */
+
+const pinOverlay = document.getElementById('pinOverlay');
+const pinInput = document.getElementById('pinInput');
+const pinError = document.getElementById('pinError');
+const pinSubmitBtn = document.getElementById('pinSubmitBtn');
+const pinCancelBtn = document.getElementById('pinCancelBtn');
+
+function openPinModal(){
+  pinInput.value = '';
+  pinError.style.display = 'none';
+  pinOverlay.classList.add('open');
+  setTimeout(() => pinInput.focus(), 50);
+}
+function closePinModal(){
+  pinOverlay.classList.remove('open');
+}
+function checkPin(){
+  if(pinInput.value === ADMIN_PIN){
+    closePinModal();
+    openModal();
+  }else{
+    pinError.style.display = 'block';
+    pinInput.value = '';
+    pinInput.focus();
+  }
+}
+
+pinSubmitBtn.addEventListener('click', checkPin);
+pinCancelBtn.addEventListener('click', closePinModal);
+pinInput.addEventListener('keydown', (e) => {
+  if(e.key === 'Enter') checkPin();
+});
+pinOverlay.addEventListener('click', (e) => {
+  if(e.target === pinOverlay) closePinModal();
+});
+
+function openModal(){
+  modalOverlay.classList.add('open');
+}
+function closeModal(){
+  modalOverlay.classList.remove('open');
+  appForm.reset();
+}
+
+adminBtn.addEventListener('click', openPinModal);
+cancelBtn.addEventListener('click', closeModal);
+modalOverlay.addEventListener('click', (e) => {
+  if(e.target === modalOverlay) closeModal();
+});
+
+appForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = document.getElementById('f_name').value.trim();
+  const description = document.getElementById('f_desc').value.trim();
+  const url = document.getElementById('f_url').value.trim();
+  const tags = document.getElementById('f_tags').value
+    .split(',').map(t => t.trim()).filter(Boolean);
+  const status = document.getElementById('f_status').value;
+
+  if(!name || !description || !url) return;
+
+  APPS.push({ name, description, url, tags, status });
+  saveApps();
+  closeModal();
+  renderFilters();
+  render();
+});
+
+renderFilters();
+render();
+</script>
+</body>
+</html>
