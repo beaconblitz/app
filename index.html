@@ -355,7 +355,7 @@
 
   <div class="grid" id="grid"></div>
 
-  <footer>Apps ivide add cheythal browser-il save aavum (localStorage)</footer>
+  <footer>Apps ivide add cheythal Firebase-il save aavum — ella devices-ilum sync aakum</footer>
 </div>
 
 <div class="modal-overlay" id="pinOverlay">
@@ -397,11 +397,30 @@
   </div>
 </div>
 
-<script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+import { getDatabase, ref, push, set, remove, onValue }
+  from "https://www.gstatic.com/firebasejs/10.13.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCT-6VAMi4g5RegxBX4-UAnhMuVyY0UAME",
+  authDomain: "app-hub-eeb3d.firebaseapp.com",
+  databaseURL: "https://app-hub-eeb3d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "app-hub-eeb3d",
+  storageBucket: "app-hub-eeb3d.firebasestorage.app",
+  messagingSenderId: "754853155918",
+  appId: "1:754853155918:web:b9790f6020232c4dc75f1f"
+};
+
+const fbApp = initializeApp(firebaseConfig);
+const db = getDatabase(fbApp);
+const appsRef = ref(db, 'apps');
+
 /* ============================================================
-   DEFAULT APPS — used only the first time this page loads.
-   After that, apps you add via the "+ Add app" button are saved
-   in the browser's localStorage, so this list stays as a fallback.
+   DEFAULT APPS — used only once, to seed Firebase the very
+   first time this page connects to an empty database.
+   After that, all apps live in Firebase and sync across every
+   device that opens this page.
    status: "live" | "building" | "idea"
    ============================================================ */
 const DEFAULT_APPS = [
@@ -436,23 +455,19 @@ const DEFAULT_APPS = [
 ];
 /* ============================================================ */
 
-const STORAGE_KEY = 'apphub_apps_v1';
+let APPS = [];
 
-function loadApps(){
-  try{
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if(raw) return JSON.parse(raw);
-  }catch(e){}
-  return DEFAULT_APPS.slice();
-}
-
-function saveApps(){
-  try{
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(APPS));
-  }catch(e){}
-}
-
-let APPS = loadApps();
+onValue(appsRef, (snapshot) => {
+  const val = snapshot.val();
+  if(val){
+    APPS = Object.keys(val).map(key => ({ key, ...val[key] }));
+  } else {
+    APPS = [];
+    DEFAULT_APPS.forEach(app => set(push(appsRef), app));
+  }
+  renderFilters();
+  render();
+});
 
 const grid = document.getElementById('grid');
 const filtersEl = document.getElementById('filters');
@@ -471,6 +486,12 @@ function initials(name){
   return name.split(' ').filter(Boolean).slice(0,2).map(w => w[0]).join('').toUpperCase();
 }
 
+function hashToIndex(str, mod){
+  let h = 0;
+  for(let i = 0; i < str.length; i++) h = (h * 31 + str.charCodeAt(i)) % mod;
+  return h;
+}
+
 function statusLabel(s){
   return { live: 'Live', building: 'Building', idea: 'Idea' }[s] || s;
 }
@@ -482,7 +503,7 @@ function render(){
     const matchesSearch = !q ||
       app.name.toLowerCase().includes(q) ||
       app.description.toLowerCase().includes(q) ||
-      app.tags.some(t => t.toLowerCase().includes(q));
+      (app.tags || []).some(t => t.toLowerCase().includes(q));
     return matchesFilter && matchesSearch;
   });
 
@@ -492,18 +513,17 @@ function render(){
   }
 
   grid.innerHTML = filtered.map((app) => {
-    const originalIndex = APPS.indexOf(app);
-    const gradient = ICON_GRADIENTS[originalIndex % ICON_GRADIENTS.length];
+    const gradient = ICON_GRADIENTS[hashToIndex(app.key || app.name, ICON_GRADIENTS.length)];
     return `
       <div class="card glass-panel">
-        <button class="delete-btn" data-index="${originalIndex}" title="Delete" aria-label="Delete app">×</button>
+        <button class="delete-btn" data-key="${app.key}" title="Delete" aria-label="Delete app">×</button>
         <div class="icon" style="background:${gradient}">${initials(app.name)}</div>
         <div class="card-body">
           <h3>${app.name}</h3>
           <p>${app.description}</p>
           <div class="meta-row">
             <span class="status ${app.status}">${statusLabel(app.status)}</span>
-            ${app.tags.map(t => `<span class="tag">${t}</span>`).join('')}
+            ${(app.tags || []).map(t => `<span class="tag">${t}</span>`).join('')}
           </div>
         </div>
         <a class="launch" href="${app.url}" target="_blank" rel="noopener">Open app</a>
@@ -513,7 +533,7 @@ function render(){
 
   grid.querySelectorAll('.delete-btn').forEach(btn => {
     btn.addEventListener('click', () => {
-      const idx = parseInt(btn.dataset.index, 10);
+      const key = btn.dataset.key;
       const pin = prompt('Admin PIN nalkuu:');
       if(pin === null) return;
       if(pin !== ADMIN_PIN){
@@ -521,10 +541,7 @@ function render(){
         return;
       }
       if(confirm('Ee app remove cheyyano?')){
-        APPS.splice(idx, 1);
-        saveApps();
-        renderFilters();
-        render();
+        remove(ref(db, 'apps/' + key));
       }
     });
   });
@@ -618,15 +635,9 @@ appForm.addEventListener('submit', (e) => {
 
   if(!name || !description || !url) return;
 
-  APPS.push({ name, description, url, tags, status });
-  saveApps();
+  set(push(appsRef), { name, description, url, tags, status });
   closeModal();
-  renderFilters();
-  render();
 });
-
-renderFilters();
-render();
 </script>
 </body>
 </html>
