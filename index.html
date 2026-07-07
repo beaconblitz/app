@@ -243,6 +243,20 @@
     transition:all .2s ease;
   }
   .admin-btn:hover{transform:scale(1.03);}
+  .clear-btn{
+    background:rgba(255,80,80,0.15);
+    color:#FF9E9E;
+    border:1px solid rgba(255,80,80,0.35);
+    padding:0 18px;
+    border-radius:16px;
+    font-size:14px;
+    font-weight:600;
+    font-family:'Inter',sans-serif;
+    cursor:pointer;
+    white-space:nowrap;
+    transition:all .2s ease;
+  }
+  .clear-btn:hover{background:rgba(255,80,80,0.28);}
   .delete-btn{
     position:absolute;
     top:10px;
@@ -350,6 +364,7 @@
   <div class="toolbar">
     <input type="text" id="search" placeholder="App search cheyyu...">
     <button id="adminBtn" class="admin-btn">+ Add app</button>
+    <button id="clearAllBtn" class="clear-btn">Clear all</button>
   </div>
   <div class="filters glass-panel" id="filters" style="padding:8px;display:inline-flex;"></div>
 
@@ -417,11 +432,9 @@ const db = getDatabase(fbApp);
 const appsRef = ref(db, 'apps');
 
 /* ============================================================
-   DEFAULT APPS — used only once, to seed Firebase the very
-   first time this page connects to an empty database.
-   After that, all apps live in Firebase and sync across every
-   device that opens this page.
-   status: "live" | "building" | "idea"
+   These were just starter examples — not auto-seeded anymore.
+   All real data now lives in Firebase; use "+ Add app" to add
+   entries, and "Clear all" to wipe everything (admin PIN needed).
    ============================================================ */
 const DEFAULT_APPS = [
   {
@@ -459,12 +472,7 @@ let APPS = [];
 
 onValue(appsRef, (snapshot) => {
   const val = snapshot.val();
-  if(val){
-    APPS = Object.keys(val).map(key => ({ key, ...val[key] }));
-  } else {
-    APPS = [];
-    DEFAULT_APPS.forEach(app => set(push(appsRef), app));
-  }
+  APPS = val ? Object.keys(val).map(key => ({ key, ...val[key] })) : [];
   renderFilters();
   render();
 });
@@ -508,7 +516,10 @@ function render(){
   });
 
   if(filtered.length === 0){
-    grid.innerHTML = '<div class="empty glass-panel">Ee search-inu onnum kittiyilla</div>';
+    const msg = APPS.length === 0
+      ? 'Apps onnum illa — "+ Add app" click cheythu thudangu'
+      : 'Ee search-inu onnum kittiyilla';
+    grid.innerHTML = `<div class="empty glass-panel">${msg}</div>`;
     return;
   }
 
@@ -622,6 +633,19 @@ adminBtn.addEventListener('click', openPinModal);
 cancelBtn.addEventListener('click', closeModal);
 modalOverlay.addEventListener('click', (e) => {
   if(e.target === modalOverlay) closeModal();
+});
+
+const clearAllBtn = document.getElementById('clearAllBtn');
+clearAllBtn.addEventListener('click', () => {
+  const pin = prompt('Admin PIN nalkuu:');
+  if(pin === null) return;
+  if(pin !== ADMIN_PIN){
+    alert('Wrong PIN');
+    return;
+  }
+  if(confirm('Ella apps-um delete cheyyano? Ithu undo cheyyan pattilla.')){
+    set(appsRef, null);
+  }
 });
 
 appForm.addEventListener('submit', (e) => {
